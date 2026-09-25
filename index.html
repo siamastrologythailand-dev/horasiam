@@ -158,6 +158,10 @@ button.fbox:hover{border-color:var(--accent);cursor:pointer}
 .fchips{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
 .fchip{border:1.5px solid var(--line);border-radius:8px;padding:6px;text-align:center;display:flex;flex-direction:column;gap:2px}.fchip span{font-size:.78rem;color:var(--muted)}
 @media (max-width:640px){.fl{grid-template-columns:1fr}.fp{flex-direction:row;gap:8px}.fp br{display:none}.fp .fn{margin:0}.fdec{grid-template-columns:1fr}}
+.asp{display:inline-block;min-width:3.2em;text-align:center;border-radius:4px;padding:0 4px;font-size:.82rem}
+.asp.hard{background:var(--badbg);color:var(--bad)}.asp.soft{background:var(--goodbg);color:var(--good)}.asp.conj{background:var(--midbg);color:var(--mid)}
+.asp.tight{font-weight:700;outline:1.5px solid currentColor}
+.cmpgrid td,.cmpgrid th{text-align:center}.cmpgrid td:first-child,.cmpgrid th:first-child{text-align:left}
 .exprow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .exp{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end;margin-bottom:6px}
 .pred{border-left:4px solid var(--accent);background:var(--soft);padding:8px 12px;margin:8px 0;border-radius:0 5px 5px 0}
@@ -199,9 +203,11 @@ footer small{display:block}
  <div class="tabbar" role="tablist" id="tblTabs" aria-label="ตารางสมผุส">
   <button role="tab" aria-selected="true" aria-controls="tblP" data-mode="birth">สมผุสดวงกำเนิด</button>
   <button role="tab" aria-selected="false" aria-controls="tblP" data-mode="jr">สมผุสวันจร</button>
+  <button role="tab" aria-selected="false" aria-controls="cmpP" data-mode="cmp">เปรียบเทียบกำเนิดกับจร</button>
   <button role="tab" aria-selected="false" aria-controls="s11" data-mode="ing">ตารางดาวย้ายราศี</button>
  </div>
  <div class="tabpanel" id="tblP"><div class="tbl"><table id="ptab"></table></div><p class="note">กุมภ์ใช้ดาวราหู(๘) เป็นเจ้าเรือนตามหลักโหรสยาม ทั้งในภพ ตรียางค์ และนวางค์</p></div>
+ <div class="tabpanel" id="cmpP" hidden><div class="jbar" style="justify-content:flex-start"><span class="lbl2">วันจร</span><span class="sel"><button type="button" class="stp" data-t="cdd" data-d="-1" aria-label="ลดวันที่">◀</button><select id="cdd" aria-label="วันที่วันจร"></select><button type="button" class="stp" data-t="cdd" data-d="1" aria-label="เพิ่มวันที่">▶</button></span><span class="sel"><button type="button" class="stp" data-t="cmm" data-d="-1" aria-label="ลดเดือน">◀</button><select id="cmm" aria-label="เดือนวันจร"></select><button type="button" class="stp" data-t="cmm" data-d="1" aria-label="เพิ่มเดือน">▶</button></span><span class="sel"><button type="button" class="stp" data-t="cyy" data-d="-1" aria-label="ลดปี">◀</button><select id="cyy" aria-label="ปีวันจร"></select><button type="button" class="stp" data-t="cyy" data-d="1" aria-label="เพิ่มปี">▶</button></span><span class="sel"><button type="button" class="stp" data-t="chh" data-d="-1" aria-label="ลดชั่วโมง">◀</button><select id="chh" aria-label="ชั่วโมงวันจร"></select><button type="button" class="stp" data-t="chh" data-d="1" aria-label="เพิ่มชั่วโมง">▶</button></span><span class="sel"><button type="button" class="stp" data-t="cmn" data-d="-1" aria-label="ลดนาที">◀</button><select id="cmn" aria-label="นาทีวันจร"></select><button type="button" class="stp" data-t="cmn" data-d="1" aria-label="เพิ่มนาที">▶</button></span><button type="button" class="ghost sm" id="cNow" title="วันและเวลาปัจจุบัน">⟳ ปัจจุบัน</button></div><div id="cmpBody"></div></div>
  <div class="tabpanel" id="s11" hidden><div class="in"></div></div>
 
  <div class="tabbar" role="tablist" id="readTabs" aria-label="การวิเคราะห์">
@@ -948,7 +954,7 @@ function applyTheme(t){document.documentElement.setAttribute('data-theme',t);$('
 
 /* ---------- tabs ---------- */
 $('tblTabs').addEventListener('click',e=>{const b=e.target.closest('[role=tab]');if(!b)return;
- $('tblTabs').querySelectorAll('[role=tab]').forEach(x=>x.setAttribute('aria-selected',x===b));const ing=b.dataset.mode==='ing';$('tblP').hidden=ing;$('s11').hidden=!ing;if(CURM&&!ing)renderTable(CURM,CURT,b.dataset.mode);});
+ $('tblTabs').querySelectorAll('[role=tab]').forEach(x=>x.setAttribute('aria-selected',x===b));const md=b.dataset.mode;$('tblP').hidden=md==='ing'||md==='cmp';$('s11').hidden=md!=='ing';$('cmpP').hidden=md!=='cmp';if(CURM&&(md==='birth'||md==='jr'))renderTable(CURM,CURT,md);if(CURM&&md==='cmp')renderCompare(CURM,CURT);});
 $('readTabs').addEventListener('click',e=>{const b=e.target.closest('[role=tab]');if(!b)return;
  $('readTabs').querySelectorAll('[role=tab]').forEach(x=>{const on=x===b;x.setAttribute('aria-selected',on);$(x.getAttribute('aria-controls')).hidden=!on;});});
 
@@ -1061,7 +1067,7 @@ function run(){const v=val('');if(v.d>new Date(v.y,v.mo,0).getDate()){preview();
  $('result').hidden=false;
  renderSonthi(M);renderCharts(M,T);renderTT(M,T.date);
  $('lunarLine').innerHTML=`<span><b>จันทรคติวันกำเนิด</b> วัน${DAYS[M.thaiWd]} ${lunarText(M)}</span><span><b>จันทรคติวันจร</b> ${T.lunar}</span>`;
- {const md=$('tblTabs').querySelector('[aria-selected=true]').dataset.mode;if(md!=='ing')renderTable(M,T,md);else renderTable(M,T,'birth');}renderCmp(M);
+ {const md=$('tblTabs').querySelector('[aria-selected=true]').dataset.mode;renderTable(M,T,md==='jr'?'jr':'birth');renderCompare(M,T);}renderCmp(M);
  secFlow(M);sec1(M);sec2(M);sec3(M);sec4(M);sec5(M,T.date);sec6(M,T);sec7(M);$('s7').querySelector('.in').insertAdjacentHTML('afterbegin',predSpecial(M));secTrivai(M,T.date);secIngress(M,T);
  ['s1','s2','s3','s4','s5','s6','s7','s10','s11'].forEach(id=>{const p=$(id);p.querySelector('.exp')?.remove();});addExportBars();
  }
@@ -1096,6 +1102,34 @@ $('chart').addEventListener('click',e=>{const tk=e.target.closest('[data-k]');co
  let left=r.left-box.left+r.width/2-130,top=r.bottom-box.top+8;left=Math.max(6,Math.min(left,box.width-266));pop.style.left=left+'px';pop.style.top=top+'px';});
 document.addEventListener('click',e=>{if(e.target.closest('.popx')||(!e.target.closest('#pop')&&!e.target.closest('#chart')))$('pop').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('pop').hidden=true;});
+
+/* ---------- เปรียบเทียบกำเนิดกับจร ---------- */
+const ASPDEG={'กุม':0,'โยค':60,'ฉาก':90,'ตรีโกณ':120,'เล็ง':180};
+const dm=x=>{const L=Math.round(Math.abs(x)*60);return `${Math.floor(L/60)}° ${pad2(L%60)}′`;};
+function aspCell(tLon,nLon,tS,nS){const a=ASP[cnt(nS,tS)];const sep=Math.abs(((tLon-nLon+540)%360)-180);
+ if(!a)return `<span class="muted small">${dm(sep)}</span>`;const orb=Math.abs(sep-ASPDEG[a]);
+ const cls=a==='กุม'?'conj':(a==='โยค'||a==='ตรีโกณ')?'soft':'hard';
+ return `<span class="asp ${cls} ${orb<=3?'tight':''}" title="ห่างจากมุมตรง ${dm(orb)}">${a}</span><br><span class="small">${dm(sep)}</span>`;}
+function renderCompare(M,T){if(!M||!T)return;
+ const nat=[{k:'lag',n:'ลัคนา',lon:M.r.lag}].concat(PL.map(p=>({k:p.k,n:`${p.n.replace('ดาว','')}(${p.d})`,lon:M.pl[p.k].lon})));
+ const tra=[{k:'lag',n:'ลัคนาจร',lon:T.lag}].concat(PL.map(p=>({k:p.k,n:`${p.n.replace('ดาว','')}(${AR[p.k]})`,lon:T.pos[p.k]})));
+ let h=`<p class="small">ดวงกำเนิดเทียบกับวันจร ${esc(T.label)} ปรับวันเวลาได้จากแถบด้านบน</p>`;
+ h+=`<h3 class="small">1. เทียบตำแหน่งดาวรายดวง</h3><div class="tbl"><table><thead><tr><th>ดาว</th><th>กำเนิด ราศี</th><th>องศา ลิปดา</th><th>จร ราศี</th><th>องศา ลิปดา</th><th>ระยะที่เดินไป</th><th>จรกับตำแหน่งเดิม</th><th>จรผ่านภพเดิม</th><th>เดิน</th></tr></thead><tbody>`;
+ nat.forEach((n,i)=>{const t=tra[i],fn=fmt(n.lon),ft=fmt(t.lon),mv=((t.lon-n.lon)%360+360)%360;
+  h+=`<tr><td>${n.k==='lag'?'ลัคนา':n.n}</td><td>${SIGNS[fn.s]}</td><td>${fn.dg}° ${pad2(fn.m)}′</td><td>${SIGNS[ft.s]}</td><td>${ft.dg}° ${pad2(ft.m)}′</td><td>${dm(mv)}</td><td>${aspCell(t.lon,n.lon,ft.s,fn.s)}</td><td>${HP[cnt(M.ls,ft.s)-1]}</td><td>${n.k!=='lag'&&n.k!=='rahu'&&n.k!=='ketu'&&T.mv[n.k]<0?'<span class="tag mid">พักร์</span>':''}</td></tr>`;});
+ h+='</tbody></table></div>';
+ h+=`<h3 class="small">2. ตารางมุมสัมพันธ์ ดาวจร (แถว) กับดาวกำเนิด (คอลัมน์)</h3><div class="tbl"><table class="cmpgrid"><thead><tr><th>จร \\ กำเนิด</th>${nat.map(n=>`<th>${n.k==='lag'?'ล':BYK[n.k].d}</th>`).join('')}</tr></thead><tbody>`;
+ tra.forEach(t=>{const ts=sgn(t.lon);h+=`<tr><td>${t.n}</td>${nat.map(n=>`<td>${aspCell(t.lon,n.lon,ts,sgn(n.lon))}</td>`).join('')}</tr>`;});
+ h+=`</tbody></table></div><p class="note">มุมนับตามราศี กุม เล็ง โยค ฉาก ตรีโกณ ตัวเลขใต้ชื่อมุมคือระยะเชิงมุมจริงระหว่างดาวจรกับดาวกำเนิด กรอบเข้มคือมุมที่ห่างจากมุมตรงไม่เกิน 3 องศา สีเหลืองคือกุม สีเขียวคือโยคและตรีโกณ สีแดงคือฉากและเล็ง</p>`;
+ $('cmpBody').innerHTML=h;}
+['dd','mm','yy','hh','mn'].forEach(k=>{$('c'+k).innerHTML=$('t'+k).innerHTML;});
+function syncC(){['dd','mm','yy','hh','mn'].forEach(k=>$('c'+k).value=$('t'+k).value);}
+syncC();
+['dd','mm','yy','hh','mn'].forEach(k=>{const f=()=>{$('t'+k).value=$('c'+k).value;syncJ();if(CURM)run();};$('c'+k).addEventListener('change',f);$('c'+k).addEventListener('input',f);});
+['tdd','tmm','tyy','thh','tmn'].forEach(id=>{$(id).addEventListener('change',syncC);$(id).addEventListener('input',syncC);});
+['jdd','jmm','jyy','jhh','jmn'].forEach(id=>{$(id).addEventListener('change',syncC);$(id).addEventListener('input',syncC);});
+$('cNow').onclick=()=>{setNow('t');syncJ();syncC();if(CURM)run();};
+$('tNow').addEventListener('click',syncC);$('jNow').addEventListener('click',syncC);
 </script>
 </body>
 </html>
