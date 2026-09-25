@@ -92,6 +92,7 @@ th,td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:left;white-
 thead th{background:var(--bar);color:var(--barInk);font-weight:600;font-size:.82rem;position:sticky;top:0}
 tbody tr:nth-child(even){background:var(--soft)}
 .tag{display:inline-block;font-size:.76rem;padding:0 6px;border-radius:9px;margin-right:3px}
+.tag.emph{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .tag.good{background:var(--goodbg);color:var(--good)}.tag.bad{background:var(--badbg);color:var(--bad)}.tag.mid{background:var(--midbg);color:var(--mid)}
 .card{border-top:1px solid var(--line);padding:10px 0}.card:first-child{border-top:0}
 .card h3{margin:0 0 4px;font-size:1.02rem;font-family:'Noto Serif Thai',serif}
@@ -417,14 +418,29 @@ const DAYPLANET={1:1,2:2,3:3,4:4,5:5,6:6,0:7}; // weekday index (0=เสาร�
 // 5x5 chart: เมษ top centre, counter-clockwise
 const GRID={0:[0,2],1:[0,1],2:[1,0],3:[2,0],4:[3,0],5:[4,1],6:[4,2],7:[4,3],8:[3,4],9:[2,4],10:[1,4],11:[0,3]};
 
-function standing(k,sign){const o=[];
+// มาตรฐาน 10 ตำแหน่ง ตามหนังสือบทที่ 5: จัดเป็น 5 คู่ตรงข้าม (ราศีตรงข้ามกัน)
+// จุลจักร = ราศีตรงข้ามมหาจักร, เทวีโชค = ราศีตรงข้ามราชาโชค
+// อุจจาวิลาส = ราศีก่อนถึงอุจ (กำลังไต่ขึ้นสู่อุจ), อุจจาภิมุข = ราศีถัดจากอุจ (กำลังลงจากอุจ)
+const opp=o=>Object.fromEntries(Object.entries(o).map(([k,s])=>[k,(s+6)%12]));
+const CULA=opp(MAHA),DEVI=opp(RAJA);
+const UCCAVILAS=Object.fromEntries(['sun','moon','mars','mer','jup','ven','sat','rahu'].map(k=>[k,(UCC[k]+11)%12]));
+const UCCABHI=Object.fromEntries(['sun','moon','mars','mer','jup','ven','sat','rahu'].map(k=>[k,(UCC[k]+1)%12]));
+let NATX={}; // natal context: {k:{s,lon,h}} set by model(); used for วรโคตม and เรือนเกณฑ์
+function standing(k,sign,ctx){const o=[];
  if(LORD[sign]===k)o.push(['เกษตร','good']);
  if(UCC[k]===sign)o.push(['อุจจ์','good']);
  if(RAJA[k]===sign)o.push(['ราชาโชค','good']);
  if(MAHA[k]===sign)o.push(['มหาจักร','good']);
  if(LORD[(sign+6)%12]===k)o.push(['ประ','bad']);
+ if(UCCAVILAS[k]===sign)o.push(['อุจจาวิลาส','good']);
+ if(UCCABHI[k]===sign)o.push(['อุจจาภิมุข','mid']);
+ if(CULA[k]===sign)o.push(['จุลจักร','good']);
+ if(DEVI[k]===sign)o.push(['เทวีโชค','good']);
  if(UCC[k]!==undefined&&(UCC[k]+6)%12===sign)o.push(['นิจ','bad']);
+ const n=NATX[k];if(ctx!=='t'&&n&&n.s===sign){if(isVarg(n.lon))o.push(['วรโคตม','good']);if([1,4,7,10].includes(n.h))o.push(['เรือนเกณฑ์','emph']);}
  return o;}
+// วรโคตมนวางค์: นวางค์ตรงกับราศีที่สถิต (จรราศีนวางค์ 1 สถิรราศีนวางค์ 5 อุภัยราศีนวางค์ 9)
+function isVarg(lon){const L=Math.round(lon*60)%21600,s=Math.floor(L/1800),k=Math.floor((L%1800)*9/1800);return ([0,9,6,3][s%4]+k)%12===s;}
 const stTxt=(k,s)=>standing(k,s).map(x=>x[0]).join(' ')||'ไม่มีมาตรฐานหลัก';
 const tags=(k,s)=>standing(k,s).map(x=>`<span class="tag ${x[1]}">${x[0]}</span>`).join('');
 const fmt=l=>{const L=Math.round(l*60)%21600,s=Math.floor(L/1800),dg=Math.floor((L%1800)/60),m=L%60;return {s,dg,m,txt:`${SIGNS[s]} ${dg}° ${String(m).padStart(2,'0')}′`,code:`${s}.${dg}.${String(m).padStart(2,'0')}`}};
@@ -436,7 +452,9 @@ const ASP={1:'กุม',7:'เล็ง',3:'โยค',11:'โยค',4:'ฉา
 function model(r,birth){
  const ls=sgn(r.lag), M={r,birth,ls,pl:{}};
  const house=s=>cnt(ls,s);
+ NATX={};PL.forEach(p=>{const s=sgn(r.pos[p.k]);NATX[p.k]={s,lon:r.pos[p.k],h:house(s)};});
  PL.forEach(p=>{const s=sgn(r.pos[p.k]);M.pl[p.k]={s,h:house(s),st:standing(p.k,s),lon:r.pos[p.k],rules:[]};});
+ M.lagVarg=isVarg(r.lag);
  for(let h=1;h<=12;h++){const s=(ls+h-1)%12;M.pl[LORD[s]].rules.push(h);}
  M.houses=[];for(let h=1;h<=12;h++){const s=(ls+h-1)%12,L=LORD[s];M.houses.push({h,s,lord:L,to:M.pl[L].h,in:PL.filter(p=>M.pl[p.k].h===h).map(p=>p.k)});}
  M.lord=LORD[ls];
@@ -622,7 +640,8 @@ function renderTT(M,now){const days=HS2.jdn(now.getFullYear(),now.getMonth()+1,n
 const PNAT={sun:'อำนาจ ผู้ใหญ่ บิดา และชื่อเสียง',moon:'อารมณ์ ความรู้สึก มารดา และเพศหญิง',mars:'ความกล้า การแข่งขัน ความเร่งร้อน และอุบัติเหตุ',mer:'การสื่อสาร การเจรจา การเรียน และการค้า',jup:'ปัญญา ผู้ใหญ่ ครูบาอาจารย์ และความถูกต้อง',ven:'ความรัก ความสุข ศิลปะ และทรัพย์สิน',sat:'ภาระ ความล่าช้า ความอดทน และความทุกข์',rahu:'ความผันผวน สิ่งมึนเมา และเรื่องที่ไม่คาดคิด',ketu:'จิตใจ สิ่งลึกลับ และการเปลี่ยนผ่าน',ura:'การเปลี่ยนแปลงฉับพลันและการพลัดพราก'};
 const BENEFIC=new Set(['moon','mer','jup','ven']),MALEFIC=new Set(['sun','mars','sat','rahu','ura']);
 const DUS=new Set([6,8,12]),GOODH=new Set([1,4,5,7,9,10,11]);
-function pScore(M,k){const q=M.pl[k];let s=0;q.st.forEach(x=>s+=x[1]==='good'?1:-1);if(DUS.has(q.h))s-=1;else if(GOODH.has(q.h))s+=0.5;return s;}
+const HALF=new Set(['เทวีโชค','จุลจักร']);
+function pScore(M,k){const q=M.pl[k];let s=0;q.st.forEach(x=>{if(x[1]==='emph')return;s+=x[1]==='good'?(HALF.has(x[0])?0.5:1):x[1]==='mid'?0.25:-1;});if([1,4,7,10].includes(q.h))s*=1.5;if(DUS.has(q.h))s-=1;else if(GOODH.has(q.h))s+=0.5;return s;}
 function hScore(M,h){const H=M.houses[h-1];let s=pScore(M,H.lord);H.in.forEach(k=>{s+=0.5*pScore(M,k);if(BENEFIC.has(k))s+=0.5;if(MALEFIC.has(k))s-=0.5;});return s;}
 const verdict=s=>s>=1?'ดี':s>-1?'ปานกลาง':'ต้องระวัง';
 const TREND={'ดี':'ปัจจัยส่วนใหญ่สนับสนุน เรื่องนี้จึงมีแนวโน้มเป็นจุดแข็ง ควรพิจารณาใช้เป็นฐานในการวางแผน','ปานกลาง':'ปัจจัยทั้งส่งเสริมและขัดขวางมีน้ำหนักใกล้กัน ผลจึงขึ้นกับจังหวะดาวจรและการวางแผน','ต้องระวัง':'ปัจจัยที่ขัดขวางมีน้ำหนักมากกว่า ควรพิจารณาเรื่องนี้อย่างรอบคอบและเตรียมทางสำรอง'};
@@ -659,7 +678,8 @@ function predTopic(M,T){if(!T.h.length)return '';const sc=T.h.reduce((s,h,i)=>s+
 
 function predPlanet(M,k){const q=M.pl[k],v=verdict(pScore(M,k));
  return aBox('',[`${pn(k)} เป็นดาวแห่ง${PNAT[k]} ${BENEFIC.has(k)?'จัดเป็นศุภเคราะห์':MALEFIC.has(k)?'จัดเป็นบาปเคราะห์':''} ให้อ่านผลจากภพที่ดาวสถิต ภพที่ดาวเป็นเจ้าเรือน และมาตรฐานของดาว`],
-  [`${pn(k)}สถิตใน${hn(q.h)} ${stShort(k,q.s)} และเป็นดาวเจ้าเรือน${q.rules.length?q.rules.map(hn).join(' '):' (ไม่มี)'}: ประเด็นที่ควรพิจารณาคือ เรื่องของภพที่ดาวเป็นเจ้าเรือนจะไปแสดงผลในเรื่อง${HT[q.h-1]} ในลักษณะของ${PNAT[k]}`,`ภาพรวม: ${TREND[v]}`]);}
+  [`${pn(k)}สถิตใน${hn(q.h)} ${stShort(k,q.s)} และเป็นดาวเจ้าเรือน${q.rules.length?q.rules.map(hn).join(' '):' (ไม่มี)'}: ประเด็นที่ควรพิจารณาคือ เรื่องของภพที่ดาวเป็นเจ้าเรือนจะไปแสดงผลในเรื่อง${HT[q.h-1]} ในลักษณะของ${PNAT[k]}`,
+   [1,4,7,10].includes(q.h)?`${pn(k)}สถิตเรือนเกณฑ์ (ภพ ${q.h}) ซึ่งเป็นภพสำคัญของชีวิต: ผลของดาวดวงนี้ ทั้งตามความเป็นเจ้าเรือนและตามธรรมชาติของดาว จะแสดงออกในชีวิตอย่างชัดเจน ไม่ว่าจะเป็นด้านดีหรือด้านเสีย`:'',`ภาพรวม: ${TREND[v]}`]);}
 
 /* ---------- ทักษา ---------- */
 const ROLEMEAN={'บริวาร':'ครอบครัว คนใกล้ชิด และลูกน้อง','อายุ':'สุขภาพและความเป็นอยู่','เดช':'อำนาจ ชื่อเสียง และเกียรติยศ','ศรี':'โชคลาภ ความสำเร็จ และสิริมงคล','มูละ':'ทรัพย์สินเดิม รากฐาน และมรดก','อุตสาหะ':'การงาน ความขยัน และความพยายาม','มนตรี':'ผู้อุปถัมภ์ ผู้ใหญ่ และที่ปรึกษา','กาลกิณี':'อุปสรรค ศัตรู และเรื่องที่ไม่เป็นมงคล'};
@@ -795,7 +815,7 @@ function secIngress(M,T){const el=$('s11').querySelector('.in');const months=+($
 /* ---------- ผังการพยากรณ์ (ตามผังโหรสยามฯ 10 ขั้นตอน 4 ระยะ) ---------- */
 const SPECIAL_ASP={mars:[4,8],jup:[5,9],sat:[3,10]};
 function flowClass(M,k){const st=M.pl[k].st.map(x=>x[0]);
- if(st.some(x=>['เกษตร','อุจจ์','ราชาโชค'].includes(x)))return 0;
+ if(st.some(x=>['เกษตร','อุจจ์','ราชาโชค','วรโคตม','อุจจาวิลาส','เทวีโชค','จุลจักร'].includes(x)))return 0;
  if(st.some(x=>['ประ','นิจ','มหาจักร'].includes(x)))return 1;
  if(DUS.has(M.pl[k].h))return 2;return 3;}
 function secFlow(M){if(!M){$('s0').querySelector('.in').innerHTML='';return}
@@ -807,7 +827,7 @@ function secFlow(M){if(!M){$('s0').querySelector('.in').innerHTML='';return}
  const lagA=[];PL.forEach(p=>{const n=cnt(M.pl[p.k].s,M.ls);const a=ASP[cnt(M.ls,M.pl[p.k].s)];if(a)lagA.push(`${d(p.k)} ${a}`);if(SPECIAL_ASP[p.k]&&SPECIAL_ASP[p.k].includes(n))lagA.push(`${d(p.k)} แรงเอื้อมพิเศษ (ที่ ${n})`);});
  // step 5: planet-planet aspects
  const pp=[];for(let a=0;a<PL.length;a++)for(let b=a+1;b<PL.length;b++){const x=PL[a].k,y=PL[b].k,n=cnt(M.pl[x].s,M.pl[y].s);if(ASP[n])pp.push(`${d(x)}-${d(y)} ${ASP[n]}`);}
- const good=PL.filter(p=>M.pl[p.k].st.some(x=>['เกษตร','อุจจ์','มหาจักร','ราชาโชค'].includes(x[0]))).map(p=>`${d(p.k)} ${M.pl[p.k].st.map(x=>x[0]).join(' ')}`);
+ const good=PL.filter(p=>M.pl[p.k].st.some(x=>x[1]==='good')).map(p=>`${d(p.k)} ${M.pl[p.k].st.map(x=>x[0]).join(' ')}`);
  const weak=[...PL.filter(p=>DUS.has(M.pl[p.k].h)).map(p=>`${d(p.k)} ทุสถานภพ (ภพ ${M.pl[p.k].h})`),...M.sp.list.filter(o=>o.dir==='bad').map(o=>`${d(o.k)} พินทุบาทว์`),...PL.filter(p=>M.pl[p.k].st.some(x=>x[1]==='bad')).map(p=>`${d(p.k)} ${M.pl[p.k].st.filter(x=>x[1]==='bad').map(x=>x[0]).join(' ')}`)];
  const sj=taksaNow(M,CURT?CURT.date:new Date()),sri=BYNO[M.taksa.find(t=>t.role==='ศรี').no].k,kal=BYNO[M.taksa.find(t=>t.role==='กาลกิณี').no].k,tv=trivaiRows(M,CURT?CURT.date:new Date()).rows.find(r=>r.now);
  const h=`<p class="small">ผังการพยากรณ์ดวงชะตา สไตล์โหรสยามฯ 10 ขั้นตอน 4 ระยะ ในแต่ละกล่องแสดงค่าจากดวงนี้ แตะที่กล่องเพื่อไปยังเมนูวิเคราะห์</p>
@@ -826,7 +846,7 @@ function secFlow(M){if(!M){$('s0').querySelector('.in').innerHTML='';return}
  <div class="fp p2"><span class="fn">2</span>วัดกำลัง<br>+<br>ศักยภาพของดาว</div>
  <div class="fc"><div class="fsplit">
   <div class="fgroup"><div class="fgt"><span class="sn2">3</span>ประเมินศักยภาพดาวทั้ง 10 ดวง</div>
-   ${[['เกษตร อุจจ์ ราชาโชค','มั่นคง สูงส่ง ราบรื่น','okb','s4'],['ประ นิจ ** มหาจักร','ไม่มั่นคง อ่อนแอ ** ฝ่าฝืน','warnb','s4'],['ทุสถานภพ','อุปสรรค เสียหาย','warnb','s3'],['ดาวปกติ (ไม่ได้มาตรฐาน)','ตรวจสอบเกณฑ์พิเศษ','','s7']].map((r,i)=>`<div class="fdec"><div class="fdia">${r[0]}?</div><span class="fyes">ใช่ →</span>${go(r[3],`<b>${r[1]}</b><em>${i===1&&mahaNote.length?dl(cls[1])+' (มหาจักร: '+mahaNote.map(d).join(' ')+')':dl(cls[i])}</em>`,r[2])}</div>`).join('<div class="fno">ไม่ใช่ ↓</div>')}</div>
+   ${[['เกษตร อุจจ์ ราชาโชค อุจจาวิลาส วรโคตม เทวีโชค จุลจักร','มั่นคง สูงส่ง ราบรื่น ยั่งยืน','okb','s4'],['ประ นิจ ** มหาจักร','ไม่มั่นคง อ่อนแอ ** ฝ่าฝืน','warnb','s4'],['ทุสถานภพ','อุปสรรค เสียหาย','warnb','s3'],['ดาวปกติ (ไม่ได้มาตรฐาน)','ตรวจสอบเกณฑ์พิเศษ','','s7']].map((r,i)=>`<div class="fdec"><div class="fdia">${r[0]}?</div><span class="fyes">ใช่ →</span>${go(r[3],`<b>${r[1]}</b><em>${i===1&&mahaNote.length?dl(cls[1])+' (มหาจักร: '+mahaNote.map(d).join(' ')+')':dl(cls[i])}</em>`,r[2])}</div>`).join('<div class="fno">ไม่ใช่ ↓</div>')}</div>
   <div class="fcol">
    ${go('s1',`<span class="sn2">4</span><b>ความสัมพันธ์ ลัคนา + ดาว</b><span>5 มุม กุม เล็ง ตรีโกณ โยค ฉาก และแรงเอื้อมพิเศษของดาวอังคาร(๓) ดาวพฤหัสบดี(๕) ดาวเสาร์(๗)</span><em>${lagA.join(' · ')||'ไม่มี'}</em>`)}
    ${go('s4',`<span class="sn2">5</span><b>ความสัมพันธ์ ดาว + ดาว</b><span>5 มุม และ 45 คู่ดาว</span><em>${pp.slice(0,14).join(' · ')}${pp.length>14?` และอีก ${pp.length-14} คู่`:''}</em>`)}</div></div></div>
@@ -837,7 +857,7 @@ function secFlow(M){if(!M){$('s0').querySelector('.in').innerHTML='';return}
    ${go('s3',`<span class="sn2">7</span><b>สูตรผสมภพ 144 รูปแบบ</b><span>ดาวเจ้าเรือน A ไปภพ B เรื่อง A สัมพันธ์กับเรื่อง B</span><em>เจ้าเรือนตนุไปภพ ${L.h}</em>`)}
    ${go('s7',`<span class="sn2">8</span><b>เกณฑ์พิเศษ + ทักษา + ตรีวัย</b><span>องค์เกณฑ์ อุดมเกณฑ์ พรสวรรค์เฉพาะตัว</span><em>${[...new Set(M.sp.list.map(o=>o.g))].join(' ')||'ไม่มีเกณฑ์พิเศษ'} · ศรี ${d(sri)} กาลกิณี ${d(kal)}${tv?` · ตรีวัยช่วง${HP[tv.h-1]}`:''}</em>`)}</div>
   <div class="fgrid3 out3">
-   <div class="fbox okb"><b>สูตรเด่น</b><span>เกษตร อุจจ์ มหาจักร ราชาโชค</span><em>${good.join(' · ')||'ไม่มี'}</em></div>
+   <div class="fbox okb"><b>สูตรเด่น</b><span>เกษตร อุจจ์ มหาจักร ราชาโชค อุจจาวิลาส วรโคตม เทวีโชค จุลจักร</span><em>${good.join(' · ')||'ไม่มี'}</em></div>
    ${go('s2',`<b>จุดเด่น</b><span>อ่านเป็นเรื่องเด่น เรื่องหลักในดวงชะตา</span>`)}
    <div class="fbox warnb"><b>จุดด้อย</b><span>ภพเสีย (ทุสถานภพ) พินทุบาทว์ ดาวดับ ดาวเสีย</span><em>${[...new Set(weak)].join(' · ')||'ไม่มี'}</em></div></div></div>
 
@@ -930,7 +950,7 @@ const elemTier=s=>{const mom=[0,9,6,3][s%4];return `${ELEMP[s%4]}ธาตุช
 function sonthiText(M,name,pname){const b=M.birth,tm=`${String(b.hh).padStart(2,'0')}:${String(b.mi).padStart(2,'0')}`;
  const civWd=((HS2.horakhun(b.y,b.mo,b.d)+1)%7+7)%7,nl=nava(M.r.lag),tl=trey(M.r.lag);
  return [`ชื่อ ${name||'ไม่ได้ระบุ'} สูติกาล วัน${DAYS[civWd]}ที่ ${b.d} ${MONTHS[b.mo-1]} พ.ศ.${b.y+543}/ค.ศ.${b.y} เวลา ${tm} น. จันทรคติ วัน${DAYS[M.thaiWd]} ${lunarText(M)} จ.${provFull(pname)}`,
-  `ลัคนาสถิตราศี${SIGNS[M.ls]} ${elemTier(M.ls)} เกาะ${ORD[nl.k-1]}นวางค์ ${LNO(nl.s)} ${SIGNS[nl.s]} ${ORD[tl.k-1]}ตรียางค์ ${LNO(tl.s)} ${SIGNS[tl.s]} ${M.rerk.name}นักษัตรฤกษ์ที่ ${M.rerk.no} ประกอบไปด้วย${M.rerk.grp}แห่งฤกษ์`];}
+  `ลัคนาสถิตราศี${SIGNS[M.ls]} ${elemTier(M.ls)} เกาะ${ORD[nl.k-1]}นวางค์ ${LNO(nl.s)} ${SIGNS[nl.s]}${M.lagVarg?' (วรโคตมนวางค์)':''} ${ORD[tl.k-1]}ตรียางค์ ${LNO(tl.s)} ${SIGNS[tl.s]} ${M.rerk.name}นักษัตรฤกษ์ที่ ${M.rerk.no} ประกอบไปด้วย${M.rerk.grp}แห่งฤกษ์`];}
 function renderSonthi(M){const [a,b]=M.sonthi;$('sonthi').innerHTML=`<p>${esc(a)}</p><p>${esc(b)}</p>`;}
 
 /* ---------- position tables (กำเนิด / วันจร) ---------- */
@@ -941,7 +961,7 @@ function renderTable(M,T,mode){const isT=mode==='jr';const src=isT?T:M.r;
   if(isT){if(k){const conj=PL.filter(x=>M.pl[x.k].s===s).map(x=>BYK[x.k].d),opp=PL.filter(x=>M.pl[x.k].s===(s+6)%12).map(x=>BYK[x.k].d);
     mid=`<td>${k!=='rahu'&&k!=='ketu'&&T.mv[k]<0?'<span class="tag mid">พักร์</span>':''}</td><td class="small">${[s===M.ls?'ทับลัคนาเดิม':'',conj.length?'กุม '+conj.join(' '):'',opp.length?'เล็ง '+opp.join(' '):''].filter(Boolean).join(' / ')}</td>`;}else mid='<td></td><td></td>';}
   else mid=k?`<td class="small">${M.pl[k].rules.map(h=>HP[h-1]).join(' ')}</td><td>${tags(k,s)}</td><td>${spOf(M,k)}</td>`:'<td></td><td></td><td></td>';
-  return `<tr><td>${name}</td><td>${SIGNS[s]}</td><td>${f.dg}</td><td>${String(f.m).padStart(2,'0')}</td><td>${HP[cnt(M.ls,s)-1]}</td><td>${r.no}</td><td>${r.min}</td><td>${r.name}</td><td>${r.grp}</td>${mid}<td>${tr.k} : ${LNO(tr.s)}</td><td>${nv.k} : ${LNO(nv.s)}</td></tr>`;};
+  return `<tr><td>${name}</td><td>${SIGNS[s]}</td><td>${f.dg}</td><td>${String(f.m).padStart(2,'0')}</td><td>${HP[cnt(M.ls,s)-1]}</td><td>${r.no}</td><td>${r.min}</td><td>${r.name}</td><td>${r.grp}</td>${mid}<td>${tr.k} : ${LNO(tr.s)}</td><td>${nv.k} : ${LNO(nv.s)}${nv.s===s?' <span class="tag good">วรโคตม</span>':''}</td></tr>`;};
  t+=row('ลัคนา',src.lag,null);PL.forEach(p=>t+=row(`${p.n.replace('ดาว','')}(${isT?AR[p.k]:p.d})${!isT&&p.k===M.tanuset?'*':''}`,src.pos[p.k],p.k));
  $('ptab').innerHTML=t+'</tbody>';}
 
@@ -1095,8 +1115,8 @@ $('tNow').addEventListener('click',syncJ);
 /* ---------- tap a planet on the wheel: popup ---------- */
 const fmtDateL=d=>`วัน${['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][d.getDay()]}ที่ ${fmtDate(d)}`;
 function popHTML(k,src){const M=CURM,T=CURT;
- if(k==='lag'){const f=fmt(M.r.lag),r=rerkOf(M.r.lag);return `<h4>ลัคนา</h4><p>ราศี${SIGNS[f.s]} ${f.dg}° ${pad2(f.m)}′</p><p>${elemTier(f.s)} (ธาตุ${ELEM[f.s%4]}) ราศี${QUAL[f.s%3]} ประเภท${KIND(f.s)}</p><p>เจ้าเรือนลัคนา (ตนุลัคน์) ${pn(M.lord)}</p><p>ฤกษ์ที่ ${r.no} ${r.name} ${r.grp}ฤกษ์</p>`;}
- const lon=src==='t'?T.pos[k]:M.pl[k].lon,f=fmt(lon),r=rerkOf(lon),s=f.s,h=cnt(M.ls,s),st=standing(k,s);
+ if(k==='lag'){const f=fmt(M.r.lag),r=rerkOf(M.r.lag);return `<h4>ลัคนา</h4><p>ราศี${SIGNS[f.s]} ${f.dg}° ${pad2(f.m)}′</p><p>${elemTier(f.s)} (ธาตุ${ELEM[f.s%4]}) ราศี${QUAL[f.s%3]} ประเภท${KIND(f.s)}</p><p>เจ้าเรือนลัคนา (ตนุลัคน์) ${pn(M.lord)}</p>${M.lagVarg?'<p><span class="tag good">วรโคตมนวางค์</span> ลัคนามั่นคง ยั่งยืน แน่นอน</p>':''}<p>ฤกษ์ที่ ${r.no} ${r.name} ${r.grp}ฤกษ์</p>`;}
+ const lon=src==='t'?T.pos[k]:M.pl[k].lon,f=fmt(lon),r=rerkOf(lon),s=f.s,h=cnt(M.ls,s),st=standing(k,s,src);
  let x=`<h4>${pn(k)}${src==='t'?' จร':''}</h4><p>ราศี${SIGNS[s]} ${f.dg}° ${pad2(f.m)}′ ฤกษ์ที่ ${r.no} ${r.name}</p><p>คุณสมบัติ ดาวแห่ง${PNAT[k]} ${BENEFIC.has(k)?'เป็นศุภเคราะห์':MALEFIC.has(k)?'เป็นบาปเคราะห์':''}</p>`;
  x+=`<p>มาตรฐาน ${st.length?st.map(y=>`<span class="tag ${y[1]}">${y[0]}</span>`).join(''):'ไม่มีมาตรฐานหลัก'}</p>`;
  if(src==='t'){x+=`<p>ผ่าน${hn(h)}ของดวงเดิม${k!=='rahu'&&k!=='ketu'&&T.mv[k]<0?' เดินพักร์':''}</p>`;
