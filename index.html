@@ -875,32 +875,40 @@ function elemSym(s,x,y,r,P){const e=s%4,up=e===0||e===2,c=ELCOL[e];const h=r*1.7
  let s2=`<polygon points="${pts}" fill="none" stroke="${c}" stroke-width="1.6"><title>ธาตุ${ELEM[e]}</title></polygon>`;
  if(e===1||e===2){const yy=up?y+h*0.08:y-h*0.08;s2+=`<line x1="${x-r*0.95}" y1="${yy}" x2="${x+r*0.95}" y2="${yy}" stroke="${c}" stroke-width="1.6"/>`;}
  return s2;}
-function wheelSVG(o){const P=o.pal,W=520,C=260,R=o.small?228:186,Q=o.small?62:64,rad=Math.PI/180;
+function wheelSVG(o){const P=o.pal,W=520,C=260,R=o.small?226:178,rad=Math.PI/180;
  const U=(s)=>{const a=(90+30*s)*rad;return [Math.cos(a),-Math.sin(a),Math.sin(a),Math.cos(a)]};
  const pt=(s,r,t)=>{const [ux,uy,vx,vy]=U(s);return [C+r*ux+t*vx,C+r*uy+t*vy]};
  const F="'Sarabun','Noto Sans Thai','Tahoma','Leelawadee UI',sans-serif",FS="'Noto Serif Thai','Sarabun','Tahoma',serif";
  let g=o.nest?`<svg x="${o.nest[0]}" y="${o.nest[1]}" width="${o.nest[2]}" height="${o.nest[2]}" viewBox="0 0 ${W} ${W}">`:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${W}" width="${W}" height="${W}" role="img" aria-label="${svgEsc(o.title||'ดวง')}"><rect width="${W}" height="${W}" fill="${P.paper}"/>`;
- const R0=o.small?56:60,RC=R0+(o.small?32:30);
- // lagna sector
+ const R0=o.small?54:58,RC=R0+(o.small?30:28);
  const a0=(90+30*o.ls-15)*rad,a1=(90+30*o.ls+15)*rad;
  g+=`<path d="M${C} ${C} L${C+R*Math.cos(a0)} ${C-R*Math.sin(a0)} A${R} ${R} 0 0 0 ${C+R*Math.cos(a1)} ${C-R*Math.sin(a1)} Z" fill="${P.cellL}"/>`;
  g+=`<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${P.accent}" stroke-width="2.5"/>`;
  for(let i=0;i<12;i++){const a=(90+30*i+15)*rad;g+=`<line x1="${C+R0*Math.cos(a)}" y1="${C-R0*Math.sin(a)}" x2="${C+R*Math.cos(a)}" y2="${C-R*Math.sin(a)}" stroke="${P.line}" stroke-width="1.2"/>`;}
- g+=`<circle cx="${C}" cy="${C}" r="${R0}" fill="${P.paper}" stroke="none"/>`;
- g+=`<circle cx="${C}" cy="${C}" r="${RC}" fill="none" stroke="${P.line}" stroke-width="1.4"/>`;
- for(let s=0;s<12;s++){const [x,y]=pt(s,R0+(o.small?16:15),0);g+=`<text x="${x}" y="${y}" font-family="${FS}" font-size="${o.small?20:16}" font-weight="700" fill="${P.brown}" text-anchor="middle" dominant-baseline="middle">${'๐๑๒๓๔๕๖๗๘๙'[LORDNO[s]]}</text>`;}
- for(let s=0;s<12;s++){const [ex,ey]=pt(s,R-11,0);g+=elemSym(s,ex,ey,o.small?9:7.5,P);}
- for(let s=0;s<12;s++){const [x,y]=pt(s,R-(o.small?29:27),0);g+=`<text x="${x}" y="${y}" font-family="${F}" font-size="${o.small?14:11.5}" fill="${P.muted}" text-anchor="middle" dominant-baseline="middle">${SIGNS[s]}</text>`;}
- // natal tokens
- const place=(list,r0,step,sz,col,font,outward,src)=>{for(let s=0;s<12;s++){const L=list.filter(x=>x.s===s);if(!L.length)continue;
-  let row=0,i=0;while(i<L.length){const r=r0+(outward?1:-1)*row*step,cap=Math.max(2,Math.floor(2*Math.PI*r/12*.95/(sz*1.05)));const chunk=L.slice(i,i+cap);
-   chunk.forEach((x,j)=>{const t=(j-(chunk.length-1)/2)*sz*1.05;const [px,py]=pt(s,r,t);
-    g+=`<text x="${px}" y="${py}" font-family="${font}" font-size="${sz}" font-weight="700" fill="${x.col||col}" text-anchor="middle" dominant-baseline="middle"${x.k&&src?` data-k="${x.k}" data-src="${src}" class="tok"`:''}>${svgEsc(x.t)}</text>`;});
-   i+=cap;row++;}}};
- place(o.natal,o.small?R-58:R-56,o.small?34:26,o.small?26:22,P.ink,FS,false,'n');
- if(o.transit)place(o.transit,R+19,19,16,P.red,F,true,'t');
- if(o.houses)for(let s=0;s<12;s++){const [x,y]=pt(s,R+(o.transit?66:22),0);g+=`<text x="${x}" y="${y}" font-family="${F}" font-size="13" fill="${P.accent}" text-anchor="middle" dominant-baseline="middle">${HP[cnt(o.ls,s)-1]}</text>`;}
- (o.center||[]).forEach((c,i,a)=>{g+=`<text x="${C}" y="${C+(i-(a.length-1)/2)*22}" font-family="${F}" font-size="${c.big?22:15}" font-weight="${c.big?700:400}" fill="${c.big?P.ink:P.muted}" text-anchor="middle" dominant-baseline="middle">${svgEsc(c.t)}</text>`;});
+ g+=`<circle cx="${C}" cy="${C}" r="${R0}" fill="${P.paper}" stroke="none"/><circle cx="${C}" cy="${C}" r="${RC}" fill="none" stroke="${P.line}" stroke-width="1.4"/>`;
+ for(let s=0;s<12;s++){const [x,y]=pt(s,R0+(RC-R0)/2,0);g+=`<text x="${x}" y="${y}" font-family="${FS}" font-size="${o.small?19:16}" font-weight="700" fill="${P.brown}" text-anchor="middle" dominant-baseline="central">${'๐๑๒๓๔๕๖๗๘๙'[LORDNO[s]]}</text>`;}
+ // rim band: element symbol + sign name side by side
+ const nfs=o.small?13.5:11.5,es=o.small?7.5:6.5,inner=[];
+ for(let s=0;s<12;s++){const nw=SIGNS[s].length*nfs*0.52,tot=es*2+4+nw,[ux,uy]=U(s);
+  const ext=Math.abs(ux)*Math.max(nw/2,es)+Math.abs(uy)*nfs*0.62,rn=R-6-ext;inner[s]=rn-ext;
+  const [sx,sy]=pt(s,rn,-tot/2+es),[nx,ny]=pt(s,rn,-tot/2+es*2+4+nw/2);
+  g+=elemSym(s,sx,sy,es,P)+`<text x="${nx}" y="${ny}" font-family="${F}" font-size="${nfs}" fill="${P.muted}" text-anchor="middle" dominant-baseline="central">${SIGNS[s]}</text>`;}
+ // token placement with width-aware rows; shrinks when a sector is crowded
+ const tw=(t,sz)=>{let w=0;for(const ch of t)w+=ch==='*'?0.42:0.64;return w*sz;};
+ const place=(list,r0f,step,sz0,col,font,outward,src,rMin)=>{for(let s=0;s<12;s++){const L=list.filter(x=>x.s===s);if(!L.length)continue;const r0=typeof r0f==='function'?r0f(s):r0f;
+  for(let sz=sz0,tries=0;tries<4;tries++,sz*=0.86){const gap=sz*0.28,rows=[];let r=outward?r0:Math.min(r0,r0+(sz0-sz)*0.5),cur=[],used=0,ok=true;
+   const cap=r=>2*Math.PI*r/12*0.84;
+   for(const x of L){const w=tw(x.t,sz);if(cur.length&&used+gap+w>cap(r)){rows.push({r,items:cur});r+=(outward?1:-1)*step*(sz/sz0);cur=[];used=0;}cur.push(x);used+=(cur.length>1?gap:0)+w;}
+   rows.push({r,items:cur});
+   if(!outward&&rows[rows.length-1].r-sz/2<rMin&&tries<3)continue;
+   rows.forEach(({r,items})=>{const ws=items.map(x=>tw(x.t,sz)),total=ws.reduce((a,b)=>a+b,0)+gap*(items.length-1);let t=-total/2;
+    items.forEach((x,j)=>{const [px,py]=pt(s,r,t+ws[j]/2);t+=ws[j]+gap;
+     g+=`<text x="${px}" y="${py}" font-family="${font}" font-size="${sz.toFixed(1)}" font-weight="700" fill="${x.col||col}" text-anchor="middle" dominant-baseline="central"${x.k&&src?` data-k="${x.k}" data-src="${src}" class="tok"`:''}>${svgEsc(x.t)}</text>`;});});
+   break;}}};
+ place(o.natal,s=>inner[s]-6-(o.small?25:22)*0.55,o.small?30:25,o.small?25:22,P.ink,FS,false,'n',RC+4);
+ if(o.transit)place(o.transit,R+16,17,15,P.red,F,true,'t');
+ if(o.houses)for(let s=0;s<12;s++){const [x,y]=pt(s,R+(o.transit?58:20),0);g+=`<text x="${x}" y="${y}" font-family="${F}" font-size="12.5" font-weight="600" fill="${P.accent}" text-anchor="middle" dominant-baseline="central">${HP[cnt(o.ls,s)-1]}</text>`;}
+ (o.center||[]).forEach((c,i,a)=>{g+=`<text x="${C}" y="${C+(i-(a.length-1)/2)*22}" font-family="${F}" font-size="${c.big?21:(o.small?16:14)}" font-weight="${c.big?700:400}" fill="${c.big?P.ink:P.muted}" text-anchor="middle" dominant-baseline="central">${svgEsc(c.t)}</text>`;});
  return g+'</svg>';}
 const AR={sun:'1',moon:'2',mars:'3',mer:'4',jup:'5',ven:'6',sat:'7',rahu:'8',ketu:'9',ura:'0'};
 function mainWheel(M,T,P,nest){const natal=[{s:M.ls,t:'ล',col:P.gold,k:'lag'}];
