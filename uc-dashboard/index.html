@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1242c4">
+<title>แดชบอร์ดผู้เข้าชื่อ พ.ร.บ.หลักประกันสุขภาพ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231242c4'/%3E%3Ccircle cx='32' cy='23' r='9' fill='%238ae3ab'/%3E%3Crect x='17' y='35' width='30' height='18' rx='9' fill='%238ae3ab'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --bg:#eef3fb; --panel:#fff; --ink:#132a5e; --muted:#5b6b8c; --line:#d7e1f2;
+  --brand:#1d4ed8; --brand-2:#1542b8; --ok:#15803d; --err:#b91c1c; --warn:#b45309; --soft:#f3f7ff;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Kanit,"Leelawadee UI",Tahoma,sans-serif;font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+.app{display:grid;grid-template-columns:370px minmax(0,1fr);gap:20px;max-width:1520px;margin:0 auto;padding:20px 16px}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+h1{font-size:19px;margin:0;font-weight:600;line-height:1.35}
+h2{font-size:15px;margin:0 0 10px;font-weight:600;color:var(--brand-2)}
+.sub{color:var(--muted);margin:2px 0 10px;font-size:13.5px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row + .row{margin-top:8px}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);flex:1;min-width:72px}
+select,input[type=number]{font:inherit;font-size:16px;color:var(--ink);padding:7px 8px;border:1px solid var(--line);border-radius:9px;background:#fff;width:100%}
+select:focus,input:focus,button:focus-visible{outline:2px solid #93b4f5;outline-offset:1px}
+button{font:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 12px;cursor:pointer;touch-action:manipulation}
+button:hover{background:var(--soft)}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600;font-size:16px;padding:12px}
+button.primary:hover{background:var(--brand-2)}
+button.link{border:0;background:none;color:var(--brand);padding:0;font-size:12.5px;text-decoration:underline}
+button:disabled{opacity:.6;cursor:progress}
+.status{display:flex;align-items:flex-start;gap:8px;font-size:14px}
+.dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex:none;margin-top:7px}
+.status.ok .dot{background:var(--ok)} .status.err .dot{background:var(--err)} .status.busy .dot{background:#f59e0b}
+.status.err{color:var(--err)}
+.live{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.live li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px;background:var(--soft);border-radius:8px;padding:6px 10px}
+.live b{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.delta-row{display:grid;grid-template-columns:1fr 104px 58px;gap:8px;align-items:center;margin-top:8px;font-size:14px}
+.delta-row input{padding:6px 8px}
+.delta-row .d{font-weight:600;text-align:right;font-variant-numeric:tabular-nums;color:var(--brand-2)}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.actions{display:flex;flex-direction:column;gap:8px}
+.msg{font-size:13.5px;margin:0;min-height:1.4em}
+.msg.err{color:var(--err)} .msg.ok{color:var(--ok)}
+.warn{color:var(--warn);font-size:13px;margin:8px 0 0}
+.preview{position:sticky;top:20px;align-self:start;min-width:0}
+canvas{width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 6px 24px rgba(20,50,120,.18);background:#dbe8fb}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;gap:12px;padding:12px 12px calc(16px + env(safe-area-inset-bottom))}
+  .preview{position:static;order:-1}
+  canvas{border-radius:10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="box">
+      <h1>แดชบอร์ดจำนวนผู้เข้าชื่อเสนอกฎหมาย</h1>
+      <p class="sub">ร่าง พ.ร.บ. หลักประกันสุขภาพแห่งชาติ</p>
+      <div class="status busy" id="status"><span class="dot"></span><span id="statusText">กำลังโหลดข้อมูล…</span></div>
+      <ul class="live" id="live"></ul>
+      <p class="warn" id="extraWarn" hidden></p>
+      <p class="hint">ระบบดึงยอดจาก einitiative.parliament.go.th อัตโนมัติทุกประมาณ 15 นาที และหน้านี้โหลดยอดใหม่ทุก 1 นาที</p>
+      <div class="row" style="margin-top:10px"><button id="btnRefresh">โหลดยอดล่าสุด</button></div>
+    </div>
+
+    <div class="box">
+      <h2>วันและเวลาที่แสดงบนภาพ</h2>
+      <div class="row">
+        <label class="f">วันที่<select id="selDay"></select></label>
+        <label class="f" style="flex:1.7">เดือน<select id="selMonth"></select></label>
+        <label class="f">ปี พ.ศ.<input id="inpYear" type="number" min="2560" max="2700" inputmode="numeric"></label>
+      </div>
+      <div class="row">
+        <label class="f">ชั่วโมง<select id="selHour"></select></label>
+        <label class="f">นาที<select id="selMin"></select></label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnNow">ใช้เวลาปัจจุบัน</button>
+        <button id="btn18">18:00 น.</button>
+      </div>
+      <p class="hint">วันเวลานี้ใช้แสดงบนภาพเท่านั้น ยอดผู้เข้าชื่อเป็นยอดจริงจากระบบ</p>
+    </div>
+
+    <div class="box actions">
+      <button class="primary" id="btnShare" hidden>แชร์ภาพ (LINE / Facebook / บันทึกลงเครื่อง)</button>
+      <button class="primary" id="btnSave">บันทึกภาพ PNG</button>
+      <button id="btnCopy" hidden>คัดลอกภาพ</button>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
+
+    <div class="box">
+      <h2>ยอดที่เพิ่มขึ้น (+)</h2>
+      <label class="check"><input type="checkbox" id="chkDelta" checked> แสดงยอดที่เพิ่มขึ้นบนภาพ</label>
+      <div id="deltaRows"></div>
+      <p class="hint"><span id="baseHint"></span> <button class="link" id="btnResetPrev" hidden>ใช้ยอดอัตโนมัติ</button></p>
+    </div>
+  </aside>
+
+  <section class="preview">
+    <canvas id="board" width="2000" height="1500" aria-label="ภาพแดชบอร์ดจำนวนผู้เข้าชื่อเสนอกฎหมาย"></canvas>
+  </section>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const nf = n => Number(n).toLocaleString('en-US');
+const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_MONTHS_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TIME_KEY = 'uc-dash-time';
+const OVERRIDE_KEY = 'uc-dash-prev-override';
+
+const S = { items: [], allCount: 0, updatedAt: null, loadedAt: 0, snaps: {} };
+
+/* ---------------- canvas drawing ---------------- */
+const W = 2000, H = 1500;
+const cv = $('board'), ctx = cv.getContext('2d');
+const FF = 'Kanit, "Leelawadee UI", Tahoma, sans-serif';
+const setFont = (w, s) => { ctx.font = `${w} ${s}px ${FF}`; };
+const tw = (t, w, s) => { setFont(w, s); return ctx.measureText(t).width; };
+function fitSize(t, w, s, maxW, min = 20) { while (s > min && tw(t, w, s) > maxW) s -= 2; return s; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function lg(x0, y0, x1, y1, stops) { const g = ctx.createLinearGradient(x0, y0, x1, y1); for (const [o, c] of stops) g.addColorStop(o, c); return g; }
+function sh(color, blur, oy = 0) { ctx.shadowColor = color; ctx.shadowBlur = blur; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = oy; }
+function nosh() { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; }
+function text(t, x, y, w, s, color, align = 'left') {
+  setFont(w, s); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y);
+}
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function sparkle(x, y, r) {
+  ctx.save(); sh('rgba(255,255,255,.95)', r * 1.2); ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.moveTo(x, y - r);
+  ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r);
+  ctx.fill(); ctx.restore();
+}
+
+function drawBackground() {
+  ctx.fillStyle = lg(0, 0, 0, H, [[0, '#c6dcfb'], [.3, '#e2eeff'], [.65, '#eef5ff'], [1, '#d2e4fa']]);
+  ctx.fillRect(0, 0, W, H);
+  const r = rng(11);
+  for (let i = 0; i < 16; i++) {
+    const x = r() * W, y = r() * H, rad = 90 + r() * 280;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  // faint city skyline + parliament silhouette
+  const q = rng(5); ctx.fillStyle = 'rgba(92,126,186,.13)';
+  for (let x = -20; x < W;) { const w = 70 + q() * 120, h = 160 + q() * 320; ctx.fillRect(x, H - h, w - 12, h); x += w; }
+  ctx.fillStyle = 'rgba(78,112,176,.16)';
+  ctx.fillRect(600, 1335, 800, 165); ctx.fillRect(720, 1290, 560, 50);
+  ctx.beginPath(); ctx.moveTo(1000, 1110); ctx.lineTo(1070, 1290); ctx.lineTo(930, 1290); ctx.closePath(); ctx.fill();
+  // bottom waves
+  ctx.beginPath(); ctx.moveTo(0, 1265); ctx.bezierCurveTo(360, 1320, 760, 1430, 1260, 1500); ctx.lineTo(0, 1500); ctx.closePath();
+  ctx.fillStyle = lg(0, 1265, 1260, 1500, [[0, '#1a4fd0'], [.55, '#3f82f2'], [1, 'rgba(110,165,255,.55)']]); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0, 1305); ctx.bezierCurveTo(360, 1360, 740, 1455, 1150, 1510);
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 7; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W, 1240); ctx.bezierCurveTo(1720, 1370, 1420, 1460, 1060, 1500); ctx.lineTo(W, 1500); ctx.closePath();
+  ctx.fillStyle = lg(W, 1240, 1060, 1500, [[0, '#139a55'], [.55, '#43c77b'], [1, 'rgba(130,225,165,.5)']]); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W, 1285); ctx.bezierCurveTo(1740, 1400, 1450, 1470, 1120, 1512);
+  ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 6; ctx.stroke();
+  // green swoosh behind the people group (top right)
+  ctx.beginPath(); ctx.moveTo(1600, 520); ctx.bezierCurveTo(1760, 500, 1900, 430, 2000, 330);
+  ctx.lineTo(2000, 400); ctx.bezierCurveTo(1900, 490, 1760, 540, 1600, 520); ctx.closePath();
+  ctx.fillStyle = lg(1600, 0, 2000, 0, [[0, 'rgba(67,199,123,0)'], [1, 'rgba(34,170,95,.85)']]); ctx.fill();
+}
+
+function drawTitle() {
+  const x = 250, y = 60, w = 1500, h = 255, r = 64;
+  ctx.save();
+  sh('rgba(10,40,120,.45)', 40, 14);
+  rr(x, y, w, h, r); ctx.fillStyle = lg(0, y, 0, y + h, [[0, '#2d6cf0'], [.5, '#1242c4'], [1, '#0a2a8a']]); ctx.fill();
+  nosh();
+  rr(x + 16, y + 12, w - 32, h * .4, [r - 12, r - 12, 26, 26]);
+  ctx.fillStyle = lg(0, y, 0, y + h * .45, [[0, 'rgba(255,255,255,.32)'], [1, 'rgba(255,255,255,.02)']]); ctx.fill();
+  rr(x, y, w, h, r); ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(150,195,255,.9)'; ctx.stroke();
+  const t = 'จำนวนผู้เข้าชื่อเสนอกฎหมาย';
+  const s = fitSize(t, 700, 140, 1230);
+  sh('rgba(0,10,60,.6)', 16, 7); text(t, 1010, y + 120, 700, s, '#ffffff', 'center');
+  ctx.restore();
+  sparkle(1705, 78, 22); sparkle(300, 290, 14);
+
+  // subtitle pill
+  const sx = 320, sy = 290, sw = 1360, sh_ = 120;
+  ctx.save();
+  sh('rgba(20,60,160,.35)', 24, 8);
+  rr(sx, sy, sw, sh_, sh_ / 2); ctx.fillStyle = lg(0, sy, 0, sy + sh_, [[0, '#ffffff'], [1, '#e4eeff']]); ctx.fill();
+  nosh(); ctx.lineWidth = 5; ctx.strokeStyle = '#94b8ff'; ctx.stroke();
+  const st = 'ร่างพระราชบัญญัติหลักประกันสุขภาพแห่งชาติ (ฉบับที่ ..) พ.ศ. ....';
+  text(st, W / 2, sy + sh_ / 2 + 2, 600, fitSize(st, 600, 66, sw - 110), '#16307c', 'center');
+  ctx.restore();
+}
+
+function drawNotebook() {
+  ctx.save(); ctx.translate(165, 285); ctx.rotate(-0.13);
+  sh('rgba(20,50,130,.35)', 30, 12);
+  rr(-118, -165, 250, 330, 26); ctx.fillStyle = lg(0, -165, 0, 165, [[0, '#2f6ff0'], [1, '#123fb4']]); ctx.fill();
+  nosh();
+  rr(-135, -178, 245, 325, 24); ctx.fillStyle = lg(-135, -178, 110, 147, [[0, '#ffffff'], [1, '#dde8f8']]); ctx.fill();
+  ctx.strokeStyle = '#c4d4ee'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = lg(-100, 0, 80, 0, [[0, '#2563eb'], [1, '#5b9bff']]);
+  for (const [y, w] of [[-110, 165], [-50, 165], [10, 165], [70, 110]]) { rr(-100, y, w, 22, 11); ctx.fill(); }
+  ctx.restore();
+  // pen
+  ctx.save(); ctx.translate(262, 300); ctx.rotate(0.42);
+  sh('rgba(10,30,90,.4)', 18, 8);
+  rr(-24, -190, 48, 290, 22); ctx.fillStyle = lg(-24, 0, 24, 0, [[0, '#0d2a78'], [.45, '#3d6fe0'], [1, '#0b2266']]); ctx.fill();
+  nosh();
+  rr(-31, -168, 14, 120, 7); ctx.fillStyle = '#d3def3'; ctx.fill();
+  rr(-26, 92, 52, 28, 6); ctx.fillStyle = lg(-26, 0, 26, 0, [[0, '#b8860b'], [.5, '#ffd666'], [1, '#a87600']]); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-22, 120); ctx.lineTo(22, 120); ctx.lineTo(0, 186); ctx.closePath();
+  ctx.fillStyle = lg(-22, 0, 22, 0, [[0, '#c99a2e'], [.5, '#ffe08a'], [1, '#b8860b']]); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-5, 172); ctx.lineTo(5, 172); ctx.lineTo(0, 190); ctx.closePath(); ctx.fillStyle = '#1f2937'; ctx.fill();
+  ctx.restore();
+}
+
+function person(cx, by, bw, c1, c2) {
+  const bh = bw * .62, hr = bw * .3, hy = by - bh - hr * 1.02;
+  const radii = [bw * .46, bw * .46, bw * .14, bw * .14];
+  ctx.save();
+  sh('rgba(15,40,110,.3)', bw * .18, bw * .06);
+  ctx.fillStyle = lg(cx - bw / 2, hy - hr, cx + bw / 2, by, [[0, c1], [1, c2]]);
+  ctx.beginPath(); ctx.roundRect(cx - bw / 2, by - bh, bw, bh, radii); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, hy, hr, 0, Math.PI * 2); ctx.fill();
+  nosh();
+  const hg = ctx.createRadialGradient(cx - hr * .35, hy - hr * .4, 1, cx - hr * .35, hy - hr * .4, hr * 1.1);
+  hg.addColorStop(0, 'rgba(255,255,255,.6)'); hg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(cx, hy, hr, 0, Math.PI * 2); ctx.fill();
+  const bg = ctx.createRadialGradient(cx - bw * .2, by - bh * .75, 1, cx - bw * .2, by - bh * .75, bw * .55);
+  bg.addColorStop(0, 'rgba(255,255,255,.38)'); bg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(cx - bw / 2, by - bh, bw, bh, radii); ctx.fill();
+  ctx.restore();
+}
+const BLUE = ['#6aa6ff', '#1f4fd0'], GREEN = ['#8ae3ab', '#179050'];
+function peopleGroup(cx, by, s) {
+  person(cx - s * .55, by - s * .14, s * .72, ...BLUE);
+  person(cx + s * .55, by - s * .14, s * .72, ...BLUE);
+  person(cx, by, s * .88, ...GREEN);
+}
+
+function drawTopRight() {
+  ctx.save(); ctx.translate(1880, 150); ctx.rotate(0.14);
+  sh('rgba(20,50,130,.25)', 24, 10);
+  rr(-95, -130, 200, 250, 20); ctx.fillStyle = lg(0, -130, 0, 120, [[0, '#ffffff'], [1, '#dfe9f8']]); ctx.fill();
+  nosh(); ctx.strokeStyle = '#c4d4ee'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = '#3b7cf0'; for (const y of [-85, -40, 5]) { rr(-60, y, 130, 17, 8); ctx.fill(); }
+  ctx.restore();
+  person(1755, 300, 92, ...BLUE);
+  person(1915, 292, 92, ...BLUE);
+  person(1835, 280, 100, ...GREEN);
+  person(1725, 420, 116, ...BLUE);
+  person(1930, 415, 116, ...BLUE);
+  person(1828, 440, 142, ...GREEN);
+}
+
+function iconCalendar(x, y, s) {
+  ctx.save();
+  sh('rgba(20,60,160,.35)', 16, 6);
+  rr(x, y + s * .1, s, s * .9, s * .18); ctx.fillStyle = lg(0, y, 0, y + s, [[0, '#3d7df5'], [1, '#1742b8']]); ctx.fill();
+  nosh();
+  rr(x + s * .1, y + s * .38, s * .8, s * .5, s * .08); ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.fillStyle = '#2f6be8';
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) { rr(x + s * (.17 + c * .24), y + s * (.45 + r * .21), s * .18, s * .14, s * .03); ctx.fill(); }
+  ctx.fillStyle = '#0d2a78';
+  for (const p of [.25, .65]) { rr(x + s * p, y, s * .1, s * .26, s * .05); ctx.fill(); }
+  ctx.restore();
+}
+
+function iconClock(cx, cy, r, hh, mm) {
+  ctx.save();
+  sh('rgba(20,60,160,.4)', 18, 6);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = lg(cx - r, cy - r, cx + r, cy + r, [[0, '#4c8dff'], [1, '#1238a8']]); ctx.fill();
+  nosh();
+  ctx.beginPath(); ctx.arc(cx, cy, r * .78, 0, Math.PI * 2);
+  ctx.fillStyle = lg(0, cy - r, 0, cy + r, [[0, '#ffffff'], [1, '#e3ecfa']]); ctx.fill();
+  ctx.strokeStyle = '#1d3f99'; ctx.lineCap = 'round';
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * Math.PI * 2, major = i % 3 === 0, r1 = r * (major ? .58 : .64), r2 = r * .7;
+    ctx.lineWidth = major ? 4 : 2;
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2); ctx.stroke();
+  }
+  // hands follow the time printed on the image
+  const ha = ((hh % 12) + mm / 60) / 12 * Math.PI * 2 - Math.PI / 2, ma = mm / 60 * Math.PI * 2 - Math.PI / 2;
+  ctx.strokeStyle = '#0b1f5c';
+  ctx.lineWidth = r * .1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(ha) * r * .36, cy + Math.sin(ha) * r * .36); ctx.stroke();
+  ctx.lineWidth = r * .07; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(ma) * r * .54, cy + Math.sin(ma) * r * .54); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r * .08, 0, Math.PI * 2); ctx.fillStyle = '#0b1f5c'; ctx.fill();
+  ctx.restore();
+}
+
+function iconDoc(x, y, w, h) {
+  const f = w * .28, c = 16;
+  ctx.save();
+  sh('rgba(30,60,140,.35)', 18, 8);
+  ctx.beginPath();
+  ctx.moveTo(x + c, y); ctx.lineTo(x + w - f, y); ctx.lineTo(x + w, y + f); ctx.lineTo(x + w, y + h - c);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - c, y + h); ctx.lineTo(x + c, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - c); ctx.lineTo(x, y + c); ctx.quadraticCurveTo(x, y, x + c, y); ctx.closePath();
+  ctx.fillStyle = lg(x, y, x + w, y + h, [[0, '#ffffff'], [1, '#dde7f5']]); ctx.fill();
+  nosh(); ctx.strokeStyle = '#c3d3ea'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + w - f, y); ctx.lineTo(x + w - f, y + f); ctx.lineTo(x + w, y + f); ctx.closePath();
+  ctx.fillStyle = '#3b82f6'; ctx.fill();
+  ctx.fillStyle = lg(x, 0, x + w, 0, [[0, '#2563eb'], [1, '#4f8ef7']]);
+  const lens = [.62, .62, .62, .45];
+  lens.forEach((l, i) => { rr(x + w * .16, y + h * (.32 + i * .16), w * l, h * .07, h * .035); ctx.fill(); });
+  ctx.restore();
+}
+
+function pill(x, y, w, h) {
+  ctx.save();
+  sh('rgba(40,90,200,.22)', 14, 4);
+  rr(x, y, w, h, h / 2); ctx.fillStyle = lg(0, y, 0, y + h, [[0, '#ffffff'], [1, '#eff5ff']]); ctx.fill();
+  nosh(); ctx.lineWidth = 4; ctx.strokeStyle = '#a8c4f2'; ctx.stroke();
+  ctx.restore();
+}
+
+function drawDateBar(v) {
+  const x = 225, y = 440, w = 1570, h = 190, r = 64;
+  ctx.save();
+  sh('rgba(40,110,255,.55)', 40);
+  rr(x, y, w, h, r); ctx.fillStyle = lg(0, y, 0, y + h, [[0, '#ffffff'], [1, '#e9f1ff']]); ctx.fill();
+  nosh();
+  rr(x, y, w, h, r); ctx.lineWidth = 12; ctx.strokeStyle = lg(x, 0, x + w, 0, [[0, '#1444c4'], [.5, '#2f77ff'], [1, '#1444c4']]); ctx.stroke();
+  rr(x + 12, y + 12, w - 24, h - 24, r - 12); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(130,175,255,.55)'; ctx.stroke();
+
+  const L1 = 'ข้อมูล ณ วันที่:', L2 = 'เวลา:';
+  const LS = 58, VS = 88, PAD = 44, PH = 118, IC = 112, G = 26;
+  const l1 = tw(L1, 500, LS), l2 = tw(L2, 500, LS);
+  const dw = tw(v.dateText, 700, VS) + PAD * 2, tw_ = tw(v.timeText, 700, VS) + PAD * 2;
+  const total = IC + G + l1 + G + dw + G * 2 + 4 + G * 2 + IC + G + l2 + G + tw_;
+  const s = Math.min(1, (w - 110) / total);
+  ctx.translate(x + w / 2, y + h / 2); ctx.scale(s, s);
+  let px = -total / 2;
+  iconCalendar(px, -IC / 2, IC); px += IC + G;
+  text(L1, px, 2, 500, LS, '#153a8c'); px += l1 + G;
+  pill(px, -PH / 2, dw, PH); text(v.dateText, px + dw / 2, 4, 700, VS, '#0a0f1f', 'center'); px += dw + G * 2;
+  ctx.fillStyle = '#7ea5e6'; ctx.fillRect(px, -48, 4, 96); px += 4 + G * 2;
+  iconClock(px + IC / 2, 0, IC / 2, v.hh, v.mm); px += IC + G;
+  text(L2, px, 2, 500, LS, '#153a8c'); px += l2 + G;
+  pill(px, -PH / 2, tw_, PH); text(v.timeText, px + tw_ / 2, 4, 700, VS, '#0a0f1f', 'center');
+  ctx.restore();
+  sparkle(245, 455, 18); sparkle(1778, 612, 16);
+}
+
+// split a long name into two lines, choosing the space that balances the widths
+function splitBalanced(t, w, s) {
+  const words = t.split(' ');
+  if (words.length < 2) return null;
+  let best = null;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+    const m = Math.max(tw(a, w, s), tw(b, w, s));
+    if (!best || m < best.m) best = { m, lines: [a, b] };
+  }
+  return best.lines;
+}
+
+function drawCard(i, it, showDelta) {
+  const X = i ? 1020 : 50, CW = 930, TOP = 688, BOT = 1288;
+  ctx.save();
+  // card body
+  sh('rgba(25,60,160,.28)', 44, 16);
+  rr(X, TOP, CW, BOT - TOP, 46); ctx.fillStyle = lg(0, TOP, 0, BOT, [[0, '#ffffff'], [1, '#edf3ff']]); ctx.fill();
+  nosh(); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+  rr(X - 4, TOP - 4, CW + 8, BOT - TOP + 8, 50); ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(110,160,240,.5)'; ctx.stroke();
+
+  // green header bar
+  const HX = X + 95, HY = 660, HW = CW - 95 + 10, HH = 148;
+  sh('rgba(8,90,50,.35)', 26, 10);
+  rr(HX, HY, HW, HH, HH / 2); ctx.fillStyle = lg(HX, 0, HX + HW, 0, [[0, '#0a6e3e'], [.5, '#22a95c'], [1, '#57d28a']]); ctx.fill();
+  nosh();
+  rr(HX + 12, HY + 8, HW - 24, HH * .42, [HH * .4, HH * .4, 20, 20]); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
+  rr(HX, HY, HW, HH, HH / 2); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(190,255,215,.7)'; ctx.stroke();
+  const ht = `ร่างกฎหมายฉบับที่ ${i + 1}`;
+  sh('rgba(0,60,30,.5)', 10, 4); text(ht, X + 240, HY + HH / 2 + 2, 700, fitSize(ht, 700, 88, HW - 200), '#ffffff'); nosh();
+
+  // number badge
+  const BX = X + 95, BY = 734, R = 110;
+  sh('rgba(10,30,100,.45)', 28, 10);
+  ctx.beginPath(); ctx.arc(BX, BY, R, 0, Math.PI * 2);
+  ctx.fillStyle = lg(BX - R, BY - R, BX + R, BY + R, [[0, '#a9ccff'], [.5, '#3c73ec'], [1, '#1a3fae']]); ctx.fill();
+  nosh();
+  ctx.beginPath(); ctx.arc(BX, BY, R - 14, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(BX, BY, R - 22, 0, Math.PI * 2);
+  const bg = ctx.createRadialGradient(BX - 30, BY - 40, 10, BX, BY, R);
+  bg.addColorStop(0, '#3a6ee6'); bg.addColorStop(1, '#0a1f66'); ctx.fillStyle = bg; ctx.fill();
+  sh('rgba(0,0,40,.55)', 12, 5); text(String(i + 1), BX, BY + 8, 800, 150, '#ffffff', 'center'); nosh();
+
+  // proposer
+  iconDoc(X + 75, 862, 125, 152);
+  const NX = X + 240, NW = CW - 240 - 36, name = it.proposer || '—';
+  const one = fitSize(name, 700, 72, NW);
+  const lines = one < 54 ? splitBalanced(name, 700, 64) : null;
+  if (lines) {
+    const ns = Math.min(...lines.map(l => fitSize(l, 700, 64, NW)));
+    text('ผู้ริเริ่มเสนอ:', NX, 872, 600, 52, '#1a3685');
+    text(lines[0], NX, 940, 700, ns, '#0c2a85');
+    text(lines[1], NX, 1003, 700, ns, '#0c2a85');
+  } else {
+    text('ผู้ริเริ่มเสนอ:', NX, 893, 600, 54, '#1a3685');
+    text(name, NX, 978, 700, one, '#0c2a85');
+  }
+  ctx.fillStyle = lg(X + 50, 0, X + CW - 50, 0, [[0, 'rgba(80,130,220,.15)'], [.5, 'rgba(80,130,220,.75)'], [1, 'rgba(80,130,220,.15)']]);
+  ctx.fillRect(X + 50, 1058, CW - 100, 3);
+
+  // signatures
+  peopleGroup(X + 138, 1240, 114);
+  const LX = X + 248, lab = 'ผู้เข้าชื่อเสนอกฎหมาย:';
+  text(lab, LX + 14, 1108, 600, fitSize(lab, 600, 54, CW - 262 - 30), '#1a3685');
+
+  const num = it.voters == null ? '—' : nf(it.voters);
+  const NS = 112, NP = 28, NH = 136, RING = 12;
+  const w0 = tw('จำนวน', 500, 52), wn = tw(num, 500, NS) + NP * 2;
+  const hasD = showDelta && it.delta != null;
+  const sign = hasD && it.delta < 0 ? '-' : '+', dv = hasD ? nf(Math.abs(it.delta)) : '';
+  const DS = 66, wd1 = tw(`(${sign}`, 600, DS), wd2 = tw(` ${dv} `, 600, DS), wd3 = tw(')', 600, DS);
+  const wd = hasD ? wd1 + wd2 + wd3 + 34 : 0;
+  const wr = tw('ราย', 600, 56), g = 14;
+  const total = w0 + g + wn + RING * 2 + (hasD ? g + wd : 0) + g + wr;
+  const s = Math.min(1, (CW - 248 - 22) / total);
+  ctx.translate(LX, 1212); ctx.scale(s, s);
+  let px = 0;
+  text('จำนวน', px, 8, 500, 52, '#1a3685'); px += w0 + g;
+  sh('rgba(34,197,94,.75)', 30);
+  rr(px, -NH / 2 - RING, wn + RING * 2, NH + RING * 2, 42);
+  ctx.fillStyle = lg(px, 0, px + wn + RING * 2, 0, [[0, '#12994a'], [.5, '#3fd07a'], [1, '#12994a']]); ctx.fill();
+  nosh();
+  rr(px + RING, -NH / 2, wn, NH, 32); ctx.fillStyle = lg(0, -NH / 2, 0, NH / 2, [[0, '#ffffff'], [1, '#eef4ff']]); ctx.fill();
+  text(num, px + RING + wn / 2, 5, 500, NS, '#2a1ea6', 'center');
+  sparkle(px + 10, -NH / 2 - 6, 18); sparkle(px + wn + RING * 2 - 8, NH / 2 + 6, 14);
+  px += wn + RING * 2 + g;
+  if (hasD) {
+    const DH = 108;
+    sh('rgba(250,204,21,.9)', 26);
+    rr(px, -DH / 2, wd, DH, 30); ctx.fillStyle = lg(0, -DH / 2, 0, DH / 2, [[0, '#fff48a'], [1, '#ffd400']]); ctx.fill();
+    nosh(); ctx.lineWidth = 3; ctx.strokeStyle = '#f2c200'; ctx.stroke();
+    let q = px + 17;
+    text(`(${sign}`, q, 4, 600, DS, '#111827'); q += wd1;
+    text(` ${dv} `, q, 4, 600, DS, '#e0161b'); q += wd2;
+    text(')', q, 4, 600, DS, '#111827');
+    px += wd + g;
+  }
+  text('ราย', px, 8, 600, 56, '#1a3685');
+  ctx.restore();
+}
+
+function drawFooter() {
+  const t1 = 'แหล่งที่มา:', t2 = ' ระบบเข้าชื่อเสนอกฎหมาย (einitiative.parliament.go.th)';
+  const w1 = tw(t1, 700, 40), w2 = tw(t2, 400, 38), w = w1 + w2 + 80, h = 74, x = (W - w) / 2, y = 1418;
+  ctx.save();
+  sh('rgba(20,60,160,.25)', 20, 6);
+  rr(x, y, w, h, h / 2); ctx.fillStyle = 'rgba(255,255,255,.93)'; ctx.fill();
+  nosh(); ctx.lineWidth = 3; ctx.strokeStyle = '#b4caf0'; ctx.stroke();
+  text(t1, x + 40, y + h / 2 + 2, 700, 40, '#15306f');
+  text(t2, x + 40 + w1, y + h / 2 + 2, 400, 38, '#15306f');
+  ctx.restore();
+}
+
+function draw(v) {
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawTitle();
+  drawNotebook();
+  drawTopRight();
+  drawDateBar(v);
+  const cards = v.items.length ? v.items : [{ proposer: 'กำลังโหลด…', voters: null, delta: null }, { proposer: 'กำลังโหลด…', voters: null, delta: null }];
+  cards.slice(0, 2).forEach((it, i) => drawCard(i, it, v.showDelta));
+  drawFooter();
+}
+
+let fontsReady = null;
+function ensureFonts() {
+  if (!fontsReady) {
+    const sample = 'กขคจำนวนผู้เข้าชื่อ 0123456789,.:()+-';
+    fontsReady = Promise.all([400, 500, 600, 700, 800].map(w => document.fonts.load(`${w} 60px Kanit`, sample))).catch(() => {});
+  }
+  return fontsReady;
+}
+
+// The PNG is prepared right after each render, so Share can run inside the tap
+// (mobile browsers refuse navigator.share once the tap is "used up" by slow work).
+const toBlob = () => new Promise(res => cv.toBlob(res, 'image/png'));
+let renderSeq = 0, blobCache = null, blobTimer = null;
+async function render() {
+  await ensureFonts();
+  draw(viewModel());
+  const seq = ++renderSeq;
+  blobCache = null;
+  clearTimeout(blobTimer);
+  blobTimer = setTimeout(async () => { const b = await toBlob(); if (seq === renderSeq) blobCache = b; }, 250);
+}
+const currentBlob = () => blobCache ? Promise.resolve(blobCache) : toBlob();
+
+/* ---------------- date & time controls ---------------- */
+function daysIn(m, yBE) { return new Date(yBE - 543, m + 1, 0).getDate(); }
+function fillSelect(sel, values, label = v => v) {
+  sel.innerHTML = values.map(v => `<option value="${v}">${label(v)}</option>`).join('');
+}
+function rebuildDays() {
+  const sel = $('selDay'), cur = +sel.value || 1;
+  const n = daysIn(+$('selMonth').value, +$('inpYear').value || 2569);
+  fillSelect(sel, Array.from({ length: n }, (_, i) => i + 1));
+  sel.value = Math.min(cur, n);
+}
+function setDate(d) {
+  $('inpYear').value = d.getFullYear() + 543;
+  $('selMonth').value = d.getMonth();
+  rebuildDays();
+  $('selDay').value = d.getDate();
+}
+function setTime(hh, mm) { $('selHour').value = pad(hh); $('selMin').value = pad(mm); saveTime(); }
+function saveTime() { try { localStorage.setItem(TIME_KEY, `${$('selHour').value}:${$('selMin').value}`); } catch (e) {} }
+
+function displayKey() { return `${+$('inpYear').value - 543}-${pad(+$('selMonth').value + 1)}-${pad(+$('selDay').value)}`; }
+function keyToThai(k) { const [y, m, d] = k.split('-').map(Number); return `${d} ${TH_MONTHS[m - 1]} ${String(y + 543).slice(-2)}`; }
+function thaiDateTime(d) { return `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${String(d.getFullYear() + 543).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+/* ---------------- "+" baseline ---------------- */
+function baseline() {
+  const k = displayKey();
+  const prev = Object.keys(S.snaps).filter(x => x < k).sort().pop();
+  return prev ? { key: prev, ...S.snaps[prev] } : null;
+}
+function readOverrides() { try { return JSON.parse(localStorage.getItem(OVERRIDE_KEY)) || {}; } catch (e) { return {}; } }
+function writeOverrides(o) { try { localStorage.setItem(OVERRIDE_KEY, JSON.stringify(o)); } catch (e) {} }
+function setOverride(id, value) {
+  const o = readOverrides(), k = displayKey();
+  o[k] = o[k] || {};
+  if (value === '') delete o[k][id]; else o[k][id] = value;
+  if (!Object.keys(o[k]).length) delete o[k];
+  writeOverrides(o);
+}
+function overridesForDate() { return readOverrides()[displayKey()] || {}; }
+
+function viewModel() {
+  const yBE = +$('inpYear').value, hh = $('selHour').value, mm = $('selMin').value;
+  return {
+    dateText: `${+$('selDay').value} ${TH_MONTHS[+$('selMonth').value]} ${String(yBE).slice(-2)}`,
+    timeText: `${hh}:${mm} น.`, hh: +hh, mm: +mm,
+    showDelta: $('chkDelta').checked,
+    items: S.items.map(it => ({ ...it, delta: deltaOf(it) })),
+  };
+}
+function deltaOf(it) {
+  const el = $('prev-' + it.id);
+  if (!el || el.value.trim() === '') return null;
+  return it.voters - Number(el.value);
+}
+
+function buildDeltaRows() {
+  $('deltaRows').innerHTML = S.items.map((it, i) => `
+    <div class="delta-row">
+      <label for="prev-${it.id}">ฉบับที่ ${i + 1} · ยอดครั้งก่อน</label>
+      <input type="number" min="0" id="prev-${it.id}" inputmode="numeric">
+      <span class="d" id="d-${it.id}">—</span>
+    </div>`).join('');
+  S.items.forEach(it => {
+    $('prev-' + it.id).addEventListener('input', e => { setOverride(it.id, e.target.value.trim()); updateDeltaCells(); render(); });
+  });
+  applyBaseline();
+}
+function applyBaseline() {
+  const b = baseline(), ov = overridesForDate();
+  S.items.forEach(it => {
+    const el = $('prev-' + it.id);
+    if (el && document.activeElement !== el) el.value = ov[it.id] ?? b?.counts?.[it.id] ?? '';
+  });
+  updateDeltaCells();
+}
+function updateDeltaCells() {
+  S.items.forEach(it => {
+    const d = deltaOf(it), el = $('d-' + it.id);
+    if (el) el.textContent = d == null ? '—' : (d < 0 ? '−' : '+') + nf(Math.abs(d));
+  });
+  const b = baseline(), edited = Object.keys(overridesForDate()).length > 0;
+  $('baseHint').textContent = edited
+    ? 'ใช้ยอดครั้งก่อนที่คุณแก้เองสำหรับวันที่นี้'
+    : b ? `เทียบกับยอดที่ระบบบันทึกไว้ของวันที่ ${keyToThai(b.key)}${b.time ? ` (${b.time} น.)` : ''} แก้ตัวเลขเองได้`
+        : 'ยังไม่มียอดที่บันทึกไว้ของวันก่อนหน้า กรอกยอดครั้งก่อนเองได้ (ถ้าเว้นว่าง ภาพจะไม่แสดงช่อง +)';
+  $('btnResetPrev').hidden = !edited;
+}
+
+/* ---------------- data (data.json / snapshots.json next to this page) ---------------- */
+function renderLive() {
+  $('live').innerHTML = S.items.map((it, i) =>
+    `<li><span>ฉบับที่ ${i + 1} · ${escapeHtml(it.proposer)}</span><b>${nf(it.voters)} ราย</b></li>`).join('');
+  const extra = S.allCount - S.items.length;
+  $('extraWarn').hidden = extra <= 0;
+  $('extraWarn').textContent = extra > 0 ? `พบร่างที่เกี่ยวข้องอีก ${extra} ฉบับ ภาพแสดงได้ 2 ฉบับแรกเท่านั้น` : '';
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function setStatus(kind, msg) { $('status').className = 'status ' + kind; $('statusText').textContent = msg; }
+function say(kind, msg) { $('msg').className = 'msg ' + kind; $('msg').textContent = msg; }
+
+async function getJson(name) {
+  const r = await fetch(`${name}?t=${Date.now()}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error(`${name} (HTTP ${r.status})`);
+  return r.json();
+}
+let loading = null;
+function loadData(manual) {
+  if (!loading) loading = doLoad(manual).finally(() => { loading = null; });
+  return loading;
+}
+async function doLoad(manual) {
+  if (manual || !S.items.length) setStatus('busy', 'กำลังโหลดยอดล่าสุด…');
+  try {
+    const [d, snaps] = await Promise.all([getJson('data.json'), getJson('snapshots.json').catch(() => ({}))]);
+    const all = d.items || [];
+    if (!all.length) throw new Error('ไม่พบข้อมูลร่างกฎหมาย');
+    const items = all.slice(0, 2);
+    const idsChanged = items.map(i => i.id).join() !== S.items.map(i => i.id).join();
+    const changed = JSON.stringify(items) !== JSON.stringify(S.items) || JSON.stringify(snaps) !== JSON.stringify(S.snaps);
+    S.items = items; S.allCount = all.length; S.snaps = snaps;
+    S.updatedAt = d.updatedAt ? new Date(d.updatedAt) : null;
+    S.loadedAt = Date.now();
+    setStatus('ok', S.updatedAt ? `ยอดล่าสุดจากระบบ · เปลี่ยนแปลงล่าสุดเมื่อ ${thaiDateTime(S.updatedAt)} น.` : 'ยอดล่าสุดจากระบบ');
+    if (idsChanged) buildDeltaRows(); else applyBaseline();
+    renderLive();
+    if (changed || idsChanged) await render();
+    return true;
+  } catch (e) {
+    setStatus('err', 'โหลดข้อมูลไม่สำเร็จ: ' + e.message);
+    return false;
+  }
+}
+
+/* ---------------- export ---------------- */
+function fileName() {
+  return `ผู้เข้าชื่อ-พรบ-หลักประกันสุขภาพ_${$('inpYear').value}-${pad(+$('selMonth').value + 1)}-${pad(+$('selDay').value)}_${$('selHour').value}${$('selMin').value}.png`;
+}
+const canShareFiles = (() => {
+  try { return !!navigator.canShare?.({ files: [new File([new Blob(['x'], { type: 'image/png' })], 'x.png', { type: 'image/png' })] }); }
+  catch (e) { return false; }
+})();
+
+async function shareImage() {
+  try {
+    const blob = await currentBlob();
+    await navigator.share({ files: [new File([blob], fileName(), { type: 'image/png' })] });
+    say('ok', 'แชร์ภาพแล้ว');
+  } catch (e) {
+    if (e.name === 'AbortError') say('', '');
+    else if (e.name === 'NotAllowedError') say('err', 'ภาพเพิ่งเตรียมเสร็จ กดแชร์อีกครั้งได้เลย');
+    else say('err', 'แชร์ไม่สำเร็จ: ' + e.message);
+  }
+}
+async function saveImage() {
+  const blob = await currentBlob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fileName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  say('ok', `บันทึกภาพแล้ว: ${a.download}`);
+}
+async function copyImage() {
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': currentBlob() })]);
+    say('ok', 'คัดลอกภาพแล้ว วางในแชตได้เลย');
+  } catch (e) { say('err', 'คัดลอกไม่สำเร็จ ใช้ปุ่มแชร์หรือบันทึกภาพแทน'); }
+}
+
+function init() {
+  fillSelect($('selMonth'), [...Array(12).keys()], m => TH_MONTHS_FULL[m]);
+  fillSelect($('selHour'), Array.from({ length: 24 }, (_, i) => pad(i)));
+  fillSelect($('selMin'), Array.from({ length: 60 }, (_, i) => pad(i)));
+  const now = new Date();
+  setDate(now);
+  let t = null; try { t = localStorage.getItem(TIME_KEY); } catch (e) {}
+  if (t && /^\d{2}:\d{2}$/.test(t)) { $('selHour').value = t.slice(0, 2); $('selMin').value = t.slice(3); }
+  else setTime(now.getHours(), now.getMinutes());
+
+  if (canShareFiles) { $('btnShare').hidden = false; $('btnSave').classList.remove('primary'); }
+  if (navigator.clipboard?.write && window.ClipboardItem) $('btnCopy').hidden = false;
+
+  const onDate = () => { rebuildDays(); applyBaseline(); render(); };
+  $('selMonth').addEventListener('change', onDate);
+  $('inpYear').addEventListener('input', onDate);
+  $('selDay').addEventListener('change', () => { applyBaseline(); render(); });
+  for (const id of ['selHour', 'selMin']) $(id).addEventListener('change', () => { saveTime(); render(); });
+  $('chkDelta').addEventListener('change', render);
+  $('btnNow').addEventListener('click', () => { const d = new Date(); setDate(d); setTime(d.getHours(), d.getMinutes()); applyBaseline(); render(); });
+  $('btn18').addEventListener('click', () => { setTime(18, 0); render(); });
+  $('btnResetPrev').addEventListener('click', () => {
+    const o = readOverrides(); delete o[displayKey()]; writeOverrides(o);
+    S.items.forEach(it => { const el = $('prev-' + it.id); if (el) el.value = ''; });
+    applyBaseline(); render();
+  });
+  $('btnRefresh').addEventListener('click', () => loadData(true));
+  $('btnShare').addEventListener('click', shareImage);
+  $('btnSave').addEventListener('click', saveImage);
+  $('btnCopy').addEventListener('click', copyImage);
+
+  setInterval(() => { if (!document.hidden) loadData(false); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - S.loadedAt > 30000) loadData(false); });
+
+  render();
+  loadData(false);
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
